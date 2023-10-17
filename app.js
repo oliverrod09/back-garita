@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const routerUser = require("./routes/user")
 const routerResidence = require("./routes/residence")
+const routerInvitation = require("./routes/invitations")
 
 app.use(express.json())
 
@@ -12,6 +13,8 @@ app.use(express.json())
 app.use("/users", routerUser)
 
 app.use("/residence", routerResidence)
+
+app.use("/invitations", routerInvitation)
 
 
 app.use((req, res)=>{
