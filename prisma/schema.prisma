@@ -34,11 +34,13 @@ model Residences {
 
 model Invitations {
   id Int @id @default(autoincrement())
+  cod String
   name String
   cedula String
   cellphone String?
   board String?
   description String?
+  used Boolean @default(false)
   createdAt DateTime @default(now())
   expiresAt DateTime @default(now())
   user User @relation(fields: [userId], references: [id])

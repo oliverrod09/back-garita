@@ -5,6 +5,7 @@ const routerResidence = require("./routes/residence")
 const routerInvitation = require("./routes/invitations")
 
 app.use(express.json())
+const port = process.env.PORT
 
 // app.get("/user",(req, res)=>{
 //     return res.send("users")
@@ -22,6 +23,6 @@ app.use((req, res)=>{
 })
 
 
-app.listen('3000', ()=>{
-    console.log("servidor encendido")
+app.listen(port, ()=>{
+    console.log("servidor encendido "+port)
 })

@@ -2,7 +2,105 @@ const express = require("express");
 const router = express.Router();
 const {PrismaClient} = require("@prisma/client")
 const prisma = new PrismaClient()
+const {v4: uuidv4} = require("uuid")
 
+
+//use invitation
+router.get("/security/:cod", async (req,res)=>{
+    try {
+        const cod = req.params.cod
+        const invitation = await prisma.invitations.findFirst({
+            where:{
+                cod:cod
+            }
+        })
+        if (invitation) {
+            const validate = await prisma.invitations.update({
+                where:{
+                    id:Number(invitation.id)
+                },
+                data:{
+                    used:true
+                }
+            })
+            return res.status(200).json(invitation)
+        }
+        return res.status(404).json({message:"this invitation is not found"})
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({message:"server error"})
+    }
+})
+
+//all invitations admin
+router.get("/admin/", async (req, res)=>{
+    try {
+        const invitations = await prisma.invitations.findMany()
+        if (invitations) {
+            return res.status(200).json(invitations)
+        }
+
+        return res.status(404).json({message: "there are no invitations"})
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({message:"server error"})
+    }
+})
+
+// find invitation admin
+router.get("/admin/:id", async (req, res)=>{
+    try {
+        const id = req.params.id
+        const invitation = await prisma.invitations.findFirst({
+            where:{
+                id: Number(id)
+            }
+        })
+
+
+        if (invitation) {
+            const now = new Date()
+            const minutes = Math.floor((invitation.expiresAt-now)/60000)
+            console.log(minutes)
+            return res.status(200).json(invitation)
+            
+        }
+        return res.status(404).json({message: "this invitation is not found"})
+
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({message:"server error"})
+    }
+})
+
+//put expired 
+router.put("/:id", async (req, res)=>{
+    try {
+        const id = req.params.id
+        const exist = await prisma.invitations.findFirst({
+            where:{
+                id:Number(id)
+            }
+        })
+
+        if (!exist) {
+            return res.status(404).json({message:"this invitation is not found"})
+        }
+        const now = new Date()
+        const invitation = await prisma.invitations.update({
+            where:{
+                id:Number(id)
+            },
+            data:{
+                expiresAt:now
+            }
+        })
+        return res.status(200).json(invitation)
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({message:"server error"})
+    }
+})
 
 //all invitations
 router.get("/", async (req, res)=>{
@@ -31,20 +129,19 @@ router.get("/:id", async (req, res)=>{
 
 
         if (invitation) {
-            // const now = new Date()
-            // const minutes = Math.floor((invitation.expiresAt-now)/60000)
-            // console.log(minutes)
+            const now = new Date()
+            const minutes = Math.floor((invitation.expiresAt-now)/60000)
+            console.log(minutes)
             return res.status(200).json(invitation)
             
         }
-        return res.status(404).json({message: "this user is not found"})
+        return res.status(404).json({message: "this invitation is not found"})
 
     } catch (error) {
         console.log(error)
         return res.status(500).json({message:"server error"})
     }
 })
-
 
 //add invitation
 router.post("/", async (req, res)=>{
@@ -72,11 +169,14 @@ router.post("/", async (req, res)=>{
             return res.status(404).json({message:"this residence is not found"})
         }
 
+        const cod = `${userId}_${uuidv4()}`
+
         
         const newInvitation = await prisma.invitations.create({
             data:{
                 name,
                 cedula,
+                cod,
                 cellphone,
                 board,
                 description,
@@ -87,6 +187,32 @@ router.post("/", async (req, res)=>{
         })
 
         return res.status(201).json(newInvitation)
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({message:"server error"})
+    }
+})
+
+//delete invitation
+router.delete("/:id", async (req, res)=>{
+    try {
+        const id = req.params.id
+        exist = await prisma.invitations.findFirst({
+            where:{
+                id:Number(id)
+            }
+        })
+
+        if (!exist) {
+            return res.status(404).json({message:"this invitation is not found"})
+        }
+        const deleteInvitation = await prisma.invitations.delete({
+            where:{
+                id:Number(id)
+            }
+        })
+
+        return res.status(200).json(deleteInvitation)
     } catch (error) {
         console.log(error)
         return res.status(500).json({message:"server error"})
