@@ -230,7 +230,7 @@ router.post("/login", async(req, res)=>{
         const hashPassword = bcrypt.hashSync(password, user.salt)
 
         if (hashPassword==user.hash) {
-            jwt.sign({user}, process.env.LOCAL_KEY,{expiresIn:"1m"}, (error, token)=>{
+            jwt.sign({user}, process.env.LOCAL_KEY,{expiresIn:"12h"}, (error, token)=>{
                 if (error) {
                     console.log(error)
                     return res.status(404).json({message:"token not generated"})
@@ -288,7 +288,7 @@ router.post("/", async (req, res)=>{
         })
 
         if (findCedula) {
-            return res.status(409).json({message:"there is already a residence with this cedula"})
+            return res.status(409).json({message:"there is already a user with this cedula"})
         }
 
         const findIdentifier = await prisma.residences.findFirst({

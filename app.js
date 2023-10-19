@@ -3,9 +3,11 @@ const app = express();
 const routerUser = require("./routes/user")
 const routerResidence = require("./routes/residence")
 const routerInvitation = require("./routes/invitations")
-
+const cors = require("cors")
 app.use(express.json())
+app.use(cors())
 const port = process.env.PORT
+
 
 // app.get("/user",(req, res)=>{
 //     return res.send("users")
