@@ -2,6 +2,9 @@ const express = require("express");
 const router = express.Router();
 const {PrismaClient} = require("@prisma/client")
 const prisma = new PrismaClient()
+const bcrypt = require("bcrypt")
+const jwt = require("jsonwebtoken")
+const auth = require("../middlewares/auth")
 
 
 //ROUTES OF USERS FOR ADMINS
@@ -44,7 +47,7 @@ router.get("/admin/:id", async (req, res)=>{
 //create user for admin
 router.post("/admin", async (req, res)=>{
     try {
-        const {name, email, cedula, residenceIdenti} = req.body
+        const {name, email, cedula, residenceIdenti, password} = req.body
 
         const findEmail = await prisma.user.findFirst({
             where:{
@@ -75,13 +78,17 @@ router.post("/admin", async (req, res)=>{
         if (!findIdentifier) {
             return res.status(404).json({message:"there is no residence with this identifier"})
         }
+        const salt = bcrypt.genSaltSync(10)
+        const hash = bcrypt.hashSync(password, salt)
 
         const newUser = await prisma.user.create({
             data:{
                 name,
                 email,
                 cedula,
-                residenceIdenti
+                residenceIdenti,
+                salt,
+                hash
             }
         })
         return res.status(201).json(newUser)
@@ -168,6 +175,11 @@ router.delete("/admin/:id", async (req, res)=>{
             return res.status(404).json({message:"this user is not found"})
         }
 
+        const deleteInvitation = await prisma.invitations.deleteMany({
+            where:{
+                userId:Number(id)
+            }
+        }) 
         const deleteUser = await prisma.user.delete({
             where:{
                 id:Number(id)
@@ -202,8 +214,40 @@ router.delete("/admin/:id", async (req, res)=>{
 //     }
 // })
 
+//login user
+router.post("/login", async(req, res)=>{
+    try {
+        const {email, password} = req.body
+        const user = await prisma.user.findFirst({
+            where:{
+                email:email
+            }
+        })
+        if (!user) {
+            return res.status(404).json({message: "this email is not registered"})
+        }
+        
+        const hashPassword = bcrypt.hashSync(password, user.salt)
+
+        if (hashPassword==user.hash) {
+            jwt.sign({user}, process.env.LOCAL_KEY,{expiresIn:"1m"}, (error, token)=>{
+                if (error) {
+                    console.log(error)
+                    return res.status(404).json({message:"token not generated"})
+                }
+                return res.status(200).json({token: token})
+            })
+        }else{
+            return res.status(401).json({message:"password incorrect"})
+        }
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({message:"server error"})
+    }
+})
+
 //find user
-router.get("/:id", async (req, res)=>{
+router.get("/:id", auth, async (req, res)=>{
     try {
         const id = req.params.id
         const findUser = await prisma.user.findFirst({
@@ -225,7 +269,7 @@ router.get("/:id", async (req, res)=>{
 //create user for user
 router.post("/", async (req, res)=>{
     try {
-        const {name, email, cedula, residenceIdenti} = req.body
+        const {name, email, cedula, residenceIdenti, password} = req.body
 
         const findEmail = await prisma.user.findFirst({
             where:{
@@ -234,7 +278,7 @@ router.post("/", async (req, res)=>{
         })
 
         if (findEmail) {
-            return res.status(409).json({message:"there is already a residence with this email"})
+            return res.status(409).json({message:"there is already a user with this email"})
         }
 
         const findCedula = await prisma.user.findFirst({
@@ -257,12 +301,17 @@ router.post("/", async (req, res)=>{
             return res.status(404).json({message:"there is no residence with this identifier"})
         }
 
+        const salt = bcrypt.genSaltSync(10)
+        const hash = bcrypt.hashSync(password, salt)
+
         const newUser = await prisma.user.create({
             data:{
                 name,
                 email,
                 cedula,
-                residenceIdenti
+                residenceIdenti,
+                salt,
+                hash
             }
         })
         return res.status(201).json(newUser)
@@ -349,6 +398,11 @@ router.delete("/:id", async (req, res)=>{
             return res.status(404).json({message:"this user is not found"})
         }
 
+        const deleteInvitation = await prisma.invitations.deleteMany({
+            where:{
+                userId:Number(id)
+            }
+        }) 
         const deleteUser = await prisma.user.delete({
             where:{
                 id:Number(id)
