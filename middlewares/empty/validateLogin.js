@@ -1,8 +1,8 @@
 
 const Validate = (req, res, next) =>{
-    const {user, password} = req.body;
-    if (user.length==0) {
-        return res.status(400).json({message:"user content is empty"});
+    const {email, password} = req.body;
+    if (email.length==0) {
+        return res.status(400).json({message:"email content is empty"});
     }else if(password.length==0){
         return res.status(400).json({message:"password content is empty"});
     }

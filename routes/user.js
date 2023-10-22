@@ -5,9 +5,14 @@ const prisma = new PrismaClient()
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
 const auth = require("../middlewares/auth")
+const validateLogin = require("../middlewares/empty/validateLogin")
 
 
 //ROUTES OF USERS FOR ADMINS
+router.get("/auth/user", auth, async(req, res)=>{
+    return res.status(200).json({message:"logged user"})
+})
+
 
 //all users for admin
 router.get("/admin", async (req, res)=>{
@@ -215,7 +220,7 @@ router.delete("/admin/:id", async (req, res)=>{
 // })
 
 //login user
-router.post("/login", async(req, res)=>{
+router.post("/login", validateLogin, async(req, res)=>{
     try {
         const {email, password} = req.body
         const user = await prisma.user.findFirst({
@@ -224,7 +229,7 @@ router.post("/login", async(req, res)=>{
             }
         })
         if (!user) {
-            return res.status(404).json({message: "this email is not registered"})
+            return res.status(401).json({message: "this email is not registered"})
         }
         
         const hashPassword = bcrypt.hashSync(password, user.salt)
@@ -267,7 +272,7 @@ router.get("/:id", auth, async (req, res)=>{
 })
 
 //create user for user
-router.post("/", async (req, res)=>{
+router.post("/", auth, async (req, res)=>{
     try {
         const {name, email, cedula, residenceIdenti, password} = req.body
 
@@ -323,7 +328,7 @@ router.post("/", async (req, res)=>{
 })
 
 //update user for user
-router.put("/:id", async (req, res)=>{
+router.put("/:id", auth, async (req, res)=>{
     try {
         const id = req.params.id
         const update = req.body
@@ -384,7 +389,7 @@ router.put("/:id", async (req, res)=>{
 })
 
 //delete user for user
-router.delete("/:id", async (req, res)=>{
+router.delete("/:id", auth, async (req, res)=>{
     try {
         const id = req.params.id
 
@@ -415,6 +420,7 @@ router.delete("/:id", async (req, res)=>{
         return res.status(500).json({message:"server error"})
     }
 })
+
 
 
 
