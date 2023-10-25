@@ -6,6 +6,7 @@ const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
 const auth = require("../middlewares/auth")
 const validateLogin = require("../middlewares/empty/validateLogin")
+const validateRegister = require("../middlewares/create_user")
 
 
 //ROUTES OF USERS FOR ADMINS
@@ -272,7 +273,7 @@ router.get("/:id", auth, async (req, res)=>{
 })
 
 //create user for user
-router.post("/", auth, async (req, res)=>{
+router.post("/", validateRegister,  async (req, res)=>{
     try {
         const {name, email, cedula, residenceIdenti, password} = req.body
 

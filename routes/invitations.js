@@ -4,6 +4,8 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const { v4: uuidv4 } = require("uuid");
 const jwt = require("jsonwebtoken");
+const auth = require("../middlewares/auth")
+const Vcreate = require("../middlewares/create_inv")
 
 //use invitation
 router.get("/security/:cod", async (req, res) => {
@@ -71,7 +73,7 @@ router.get("/admin/:id", async (req, res) => {
 });
 
 //find invitations of user
-router.get("/user", async (req, res) => {
+router.get("/user", auth, async (req, res) => {
   try {
     var id = 1;
     const token = req.headers["authorization"].split(" ")[1];
@@ -81,7 +83,6 @@ router.get("/user", async (req, res) => {
           return res.status(404).json({ status: "no estás loggeado" });
         }
         id=data.user.id
-        console.log(data)
       });
     const invitations = await prisma.invitations.findMany({
       where: {
@@ -94,6 +95,7 @@ router.get("/user", async (req, res) => {
     return res.status(500).json({ message: "server error" });
   }
 });
+
 
 //put expired
 router.put("/:id", async (req, res) => {
@@ -140,7 +142,7 @@ router.get("/", async (req, res) => {
 });
 
 //find invitation
-router.get("/:id", async (req, res) => {
+router.get("/:id", auth, async (req, res) => {
   try {
     const id = req.params.id;
     const invitation = await prisma.invitations.findFirst({
@@ -163,19 +165,18 @@ router.get("/:id", async (req, res) => {
 });
 
 //add invitation
-router.post("/", async (req, res) => {
+router.post("/", auth, Vcreate, async (req, res) => {
   try {
-    const { name, cedula, cellphone, board, description, expiresAt} =
-      req.body;
-      var userId = 0
+    const { name, cedula, cellphone, board, description, expiresAt } = req.body;
+    var userId = 0;
     const token = req.headers["authorization"].split(" ")[1];
     jwt.verify(token, process.env.LOCAL_KEY, async (error, data) => {
       if (error) {
-        console.log(error)
+        console.log(error);
         return res.status(404).json({ status: "no estás loggeado" });
       }
-      userId=data.user.id
-      console.log(data)
+      userId = data.user.id;
+      console.log(data);
     });
 
     const now = new Date();
@@ -230,7 +231,7 @@ router.post("/", async (req, res) => {
 });
 
 //delete invitation
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", auth, async (req, res) => {
   try {
     const id = req.params.id;
     exist = await prisma.invitations.findFirst({
