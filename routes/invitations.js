@@ -88,6 +88,9 @@ router.get("/user", auth, async (req, res) => {
       where: {
         userId: Number(id),
       },
+      orderBy:{
+        id:"desc"
+      }
     });
     return res.status(200).json(invitations);
   } catch (error) {
@@ -111,6 +114,12 @@ router.put("/:id", async (req, res) => {
       return res.status(404).json({ message: "this invitation is not found" });
     }
     const now = new Date();
+    const expiresFind = new Date(exist.expiresAt)
+    const difference = Math.floor((expiresFind - now)/ 60000)
+
+    if (difference<0) {
+      return res.status(401).json({message:"this invitation has expired"})
+    }
     const invitation = await prisma.invitations.update({
       where: {
         id: Number(id),
