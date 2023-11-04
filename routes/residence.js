@@ -2,10 +2,12 @@ const express = require("express")
 const router = express.Router()
 const {PrismaClient} = require("@prisma/client")
 const prisma = new PrismaClient()
+const authControls = require("../middlewares/authControls")
+const authAdmin = require("../middlewares/authAdmin")
 
 
 //all residences
-router.get("/", async(req, res)=>{
+router.get("/", authControls, authAdmin, async(req, res)=>{
     try {
         const allResidences = await prisma.residences.findMany()
         return res.status(200).json(allResidences)
@@ -16,7 +18,7 @@ router.get("/", async(req, res)=>{
 })
 
 //create residences
-router.post("/", async (req, res)=>{
+router.post("/", authControls, authAdmin, async (req, res)=>{
     try {
         const {number, address, identifier} = req.body
 
@@ -55,7 +57,7 @@ router.post("/", async (req, res)=>{
 })
 
 //find residence
-router.get("/:id", async (req, res)=>{
+router.get("/:id", authControls, async (req, res)=>{
     try {
         const id = req.params.id
         const findResidence = await prisma.residences.findFirst({
@@ -75,7 +77,7 @@ router.get("/:id", async (req, res)=>{
 })
 
 //update residence
-router.put("/:id", async (req, res)=>{
+router.put("/:id", authControls, authAdmin, async (req, res)=>{
     try {
         const update = req.body
         const id = req.params.id
@@ -104,7 +106,7 @@ router.put("/:id", async (req, res)=>{
 })
 
 //delete residence
-router.delete("/:id", async (req, res)=>{
+router.delete("/:id", authControls, authAdmin, async (req, res)=>{
     try {
         const id = req.params.id
         const exist = await prisma.residences.findFirst({
@@ -117,6 +119,16 @@ router.delete("/:id", async (req, res)=>{
             return res.status(404).json({message:"this residence is not found"})
         }
 
+        const deleteInvitation = await prisma.invitations.deleteMany({
+            where:{
+                residenceId:Number(id)
+            }
+        }) 
+        const deleteUser = await prisma.user.deleteMany({
+            where:{
+                residenceIdenti:exist.identifier
+            }
+        })
         const deleteResidence = await prisma.residences.delete({
             where:{
                 id:Number(id)

@@ -5,6 +5,8 @@ const prisma = new PrismaClient()
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
 const auth = require("../middlewares/auth")
+const authControls = require("../middlewares/authControls")
+const authAdmin = require("../middlewares/authAdmin")
 const validateLogin = require("../middlewares/empty/validateLogin")
 const validateRegister = require("../middlewares/create_user")
 
@@ -16,9 +18,13 @@ router.get("/auth/user", auth, async(req, res)=>{
 
 
 //all users for admin
-router.get("/admin", async (req, res)=>{
+router.get("/admin", authControls, authAdmin, async (req, res)=>{
     try {
-        const allUsers = await prisma.user.findMany()
+        const allUsers = await prisma.user.findMany({
+            orderBy:{
+                id:"desc"
+            }
+        })
         if (allUsers) {
             return res.status(200).json(allUsers)
         }else{
@@ -31,7 +37,7 @@ router.get("/admin", async (req, res)=>{
 })
 
 //find user for admin
-router.get("/admin/:id", async (req, res)=>{
+router.get("/admin/:id", authControls, async (req, res)=>{
     try {
         const id = req.params.id
         const findUser = await prisma.user.findFirst({
@@ -51,7 +57,7 @@ router.get("/admin/:id", async (req, res)=>{
 })
 
 //create user for admin
-router.post("/admin", async (req, res)=>{
+router.post("/admin", authControls, authAdmin, async (req, res)=>{
     try {
         const {name, email, cedula, residenceIdenti, password} = req.body
 
@@ -106,7 +112,7 @@ router.post("/admin", async (req, res)=>{
 })
 
 //update user for admin
-router.put("/admin/:id", async (req, res)=>{
+router.put("/admin/:id", authControls, authAdmin, async (req, res)=>{
     try {
         const id = req.params.id
         const update = req.body
@@ -167,7 +173,7 @@ router.put("/admin/:id", async (req, res)=>{
 })
 
 //delete user for admin
-router.delete("/admin/:id", async (req, res)=>{
+router.delete("/admin/:id", authControls, authAdmin, async (req, res)=>{
     try {
         const id = req.params.id
 

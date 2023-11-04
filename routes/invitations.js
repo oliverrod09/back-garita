@@ -6,9 +6,13 @@ const { v4: uuidv4 } = require("uuid");
 const jwt = require("jsonwebtoken");
 const auth = require("../middlewares/auth")
 const Vcreate = require("../middlewares/create_inv")
+const authControls = require("../middlewares/authControls")
+const authAdmin = require("../middlewares/authAdmin")
+
+// ROUTES FOR CONTROLS ONLY
 
 //use invitation
-router.get("/security/:cod", async (req, res) => {
+router.get("/security/:cod", authControls, async (req, res) => {
   try {
     const cod = req.params.cod;
     const invitation = await prisma.invitations.findFirst({
@@ -35,9 +39,13 @@ router.get("/security/:cod", async (req, res) => {
 });
 
 //all invitations admin
-router.get("/admin/", async (req, res) => {
+router.get("/admin/", authControls, async (req, res) => {
   try {
-    const invitations = await prisma.invitations.findMany();
+    const invitations = await prisma.invitations.findMany({
+      orderBy:{
+        id:"desc"
+      }
+    });
     if (invitations) {
       return res.status(200).json(invitations);
     }
@@ -50,7 +58,7 @@ router.get("/admin/", async (req, res) => {
 });
 
 // find invitation admin
-router.get("/admin/:id", async (req, res) => {
+router.get("/admin/:id", authControls, async (req, res) => {
   try {
     const id = req.params.id;
     const invitation = await prisma.invitations.findFirst({
@@ -71,6 +79,93 @@ router.get("/admin/:id", async (req, res) => {
     return res.status(500).json({ message: "server error" });
   }
 });
+
+//find invitations of user
+router.get("/admin/user/:id", authControls, async (req, res) => {
+  try {
+    const id = req.params.id
+    const invitations = await prisma.invitations.findMany({
+      where: {
+        userId: Number(id),
+      },
+      orderBy:{
+        id:"desc"
+      }
+    });
+    return res.status(200).json(invitations);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "server error" });
+  }
+});
+
+//delete invitation admin
+router.delete("/admin/:id", authControls, authAdmin, async (req, res) => {
+  try {
+    const id = req.params.id;
+    exist = await prisma.invitations.findFirst({
+      where: {
+        id: Number(id),
+      },
+    });
+
+    if (!exist) {
+      return res.status(404).json({ message: "this invitation is not found" });
+    }
+    const deleteInvitation = await prisma.invitations.delete({
+      where: {
+        id: Number(id),
+      },
+    });
+
+    return res.status(200).json(deleteInvitation);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "server error" });
+  }
+});
+
+//expire invitation admin
+router.put("/admin/:id", authControls, authAdmin, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const exist = await prisma.invitations.findFirst({
+      where: {
+        id: Number(id),
+      },
+    });
+
+    if (!exist) {
+      return res.status(404).json({ message: "this invitation is not found" });
+    }
+    const now = new Date();
+    const expiresFind = new Date(exist.expiresAt)
+    const difference = Math.floor((expiresFind - now)/ 60000)
+
+    if (difference<0) {
+      return res.status(401).json({message:"this invitation has expired"})
+    }
+    const invitation = await prisma.invitations.update({
+      where: {
+        id: Number(id),
+      },
+      data: {
+        expiresAt: now,
+      },
+    });
+    return res.status(200).json(invitation);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "server error" });
+  }
+});
+
+//---------------------------------------------------------//
+//---------------------------------------------------------//
+//---------------------------------------------------------//
+
+// ROUTES FOR USERS ONLY
+
 
 //find invitations of user
 router.get("/user", auth, async (req, res) => {
@@ -99,9 +194,8 @@ router.get("/user", auth, async (req, res) => {
   }
 });
 
-
 //put expired
-router.put("/:id", async (req, res) => {
+router.put("/:id", auth, async (req, res) => {
   try {
     const id = req.params.id;
     const exist = await prisma.invitations.findFirst({
@@ -136,19 +230,19 @@ router.put("/:id", async (req, res) => {
 });
 
 //all invitations
-router.get("/", async (req, res) => {
-  try {
-    const invitations = await prisma.invitations.findMany();
-    if (invitations) {
-      return res.status(200).json(invitations);
-    }
+// router.get("/", async (req, res) => {
+//   try {
+//     const invitations = await prisma.invitations.findMany();
+//     if (invitations) {
+//       return res.status(200).json(invitations);
+//     }
 
-    return res.status(404).json({ message: "there are no invitations" });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ message: "server error" });
-  }
-});
+//     return res.status(404).json({ message: "there are no invitations" });
+//   } catch (error) {
+//     console.log(error);
+//     return res.status(500).json({ message: "server error" });
+//   }
+// });
 
 //find invitation
 router.get("/:id", auth, async (req, res) => {

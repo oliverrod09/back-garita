@@ -63,7 +63,8 @@ model Guests {
 
 model Role {
   id Int @id @default(autoincrement())
-  name String
+  name String @unique
+  level Int @default(2)
   controls Controls[] // Establecer la relación con la tabla Controls
 }
 
@@ -75,7 +76,6 @@ model Controls {
   role Role @relation(fields: [roleId], references: [id])
   salt String
   hash String
-  cedula String @unique
   createdAt DateTime @default(now())
 }
 
