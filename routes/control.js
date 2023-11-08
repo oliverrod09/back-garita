@@ -14,7 +14,7 @@ const idTokenControl = require("../controllers/control/idToken")
 //create controls
 router.post("/", authControls, async (req, res)=>{
     try {
-        const {name, email, password, role} = req.body
+        const {name, email, password, roleId} = req.body
         const findEmail = await prisma.controls.findFirst({
             where:{
                 email:email
@@ -27,7 +27,7 @@ router.post("/", authControls, async (req, res)=>{
 
         const findRole = await prisma.role.findFirst({
             where:{
-                id:Number(role)
+                id:Number(roleId)
             }
         })
 
@@ -42,7 +42,7 @@ router.post("/", authControls, async (req, res)=>{
             data:{
                 name:name,
                 email:email,
-                roleId:Number(role),
+                roleId:Number(roleId),
                 salt:salt,
                 hash:hash
             }
