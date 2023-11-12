@@ -23,6 +23,9 @@ router.get("/admin", authControls, authAdmin, async (req, res)=>{
         const allUsers = await prisma.user.findMany({
             orderBy:{
                 id:"desc"
+            },
+            include:{
+                residence:true
             }
         })
         if (allUsers) {
@@ -43,6 +46,9 @@ router.get("/admin/:id", authControls, async (req, res)=>{
         const findUser = await prisma.user.findFirst({
             where:{
                 id:Number(id)
+            },
+            include:{
+                residence:true
             }
         })
         if (findUser) {
