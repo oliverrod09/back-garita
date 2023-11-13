@@ -79,6 +79,7 @@ router.get("/:id", authControls, async (req, res)=>{
 //update residence
 router.put("/:id", authControls, authAdmin, async (req, res)=>{
     try {
+        const {number, identifier, address} = req.body
         const update = req.body
         const id = req.params.id
 
@@ -90,6 +91,28 @@ router.put("/:id", authControls, authAdmin, async (req, res)=>{
 
         if (!exist) {
             return res.status(404).json({message:"this residence is not found"})
+        }
+
+        if (number!==exist.number) {
+            const findNumber = await prisma.residences.findFirst({
+                where:{
+                    number:number
+                }
+            })
+            if (findNumber) {
+                return res.status(401).json({message:"there is already a residence with this number"})
+            }
+        }
+
+        if (identifier!==exist.identifier) {
+            const findIdentifier = await prisma.residences.findFirst({
+                where:{
+                    identifier:identifier
+                }
+            })
+            if (findIdentifier) {
+                return res.status(401).json({message:"there is already a residence with this identifier"})
+            }
         }
 
         const updateResidence = await prisma.residences.update({
