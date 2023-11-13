@@ -83,7 +83,14 @@ router.put("/admin/:id", authControls, async (req, res)=>{
 //get controls
 router.get("/", authControls, authAdmin, async(req, res)=>{
     try {
-        const controls = await prisma.controls.findMany()
+        const controls = await prisma.controls.findMany({
+            include:{
+                role:true
+            },
+            orderBy:{
+                id:"desc"
+            }
+        })
         // if (!controls) {
         //     return res.status(404).json({message:"no users added"})
         // }
@@ -124,14 +131,14 @@ router.post("/login", validateLogin, async (req, res)=>{
                     console.log(error)
                     return res.status(404).json({message:"token not generated"})
                 }
-                return res.status(200).json({token: token})
+                return res.status(200).json({token: token, level: control.role.level})
             })
         }else{
             return res.status(401).json({message:"password incorrect"})
         }
     } catch (error) {
         console.log(error)
-        res.status(404).json({message:"todo mal"})
+        res.status(404).json({message:"server error"})
     }
 })
 

@@ -9,7 +9,14 @@ const authAdmin = require("../middlewares/authAdmin")
 //all residences
 router.get("/", authControls, authAdmin, async(req, res)=>{
     try {
-        const allResidences = await prisma.residences.findMany()
+        const allResidences = await prisma.residences.findMany({
+            include:{
+                users:true
+            },
+            orderBy:{
+                id:"desc"
+            }
+        })
         return res.status(200).json(allResidences)
     } catch (error) {
         console.log(error)

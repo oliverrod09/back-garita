@@ -19,6 +19,10 @@ router.get("/security/:cod", authControls, async (req, res) => {
       where: {
         cod: cod,
       },
+      include:{
+        residence:true,
+        user:true
+      }
     });
     if (invitation) {
       const validate = await prisma.invitations.update({
@@ -44,6 +48,10 @@ router.get("/admin/", authControls, async (req, res) => {
     const invitations = await prisma.invitations.findMany({
       orderBy:{
         id:"desc"
+      },
+      include:{
+        user:true,
+        residence:true
       }
     });
     if (invitations) {
@@ -65,6 +73,10 @@ router.get("/admin/:id", authControls, async (req, res) => {
       where: {
         id: Number(id),
       },
+      include: {
+        residence:true,
+        user:true
+      }
     });
 
     if (invitation) {
