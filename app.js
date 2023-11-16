@@ -26,7 +26,7 @@ app.use("/control", routerControl)
 app.use("/role", routerRole)
 
 app.use((req, res)=>{
-    return res.status(404).send("no existe")
+    return res.status(404).send("not found")
 })
 
 
