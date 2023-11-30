@@ -16,7 +16,7 @@ router.get("/auth/user", auth, async (req, res) => {
 });
 
 //all users for admin
-router.get("/admin", authControls, authAdmin, async (req, res) => {
+router.get("/admin", authControls, async (req, res) => {
   try {
     const allUsers = await prisma.user.findMany({
       orderBy: {

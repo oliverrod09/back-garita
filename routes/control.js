@@ -58,7 +58,8 @@ router.post("/", authControls, async (req, res)=>{
 router.put("/admin/:id", authControls, async (req, res)=>{
     try {
         const id = req.params.id
-        const data = req.body
+        const {name, email, roleId, password} = req.body
+        const update = req.body
         const control = await prisma.controls.findFirst({
             where:{
                 id:Number(id)
@@ -67,11 +68,40 @@ router.put("/admin/:id", authControls, async (req, res)=>{
         if (!control) {
             return res.status(404).json({message:"this user is not found"})
         }
+        if (email !== control.email) {
+            const findEmailExist = await prisma.controls.findFirst({
+                where:{
+                    email:email
+                }
+            })
+            if (findEmailExist) {
+                return res.status(409).json({message: "there is already a user control with this email"})
+            }
+        }
+
+        const findRole = await prisma.role.findFirst({
+            where:{
+                id:Number(roleId)
+            }
+        })
+        if (!findRole) {
+            return res.status(409).json({message: "role not found"})
+        }
+
+        if (password) {
+            const salt = bcrypt.genSaltSync(10)
+            const hash = bcrypt.hashSync(password, salt)
+            update.salt = salt
+            update.hash = hash
+        }
+
+        delete update.password
+
         const updateControl = await prisma.controls.update({
             where:{
                 id:Number(id)
             },
-            data:data
+            data:update
         })
         return res.status(200).json(updateControl)
     } catch (error) {
@@ -96,9 +126,33 @@ router.get("/", authControls, authAdmin, async(req, res)=>{
         // }
         return res.status(200).json(controls)
     } catch (error) {
-        res.status(404).json({message:"todo mal"})
+        console.log(error)
+        res.status(404).json({message:"server error"})
     }
 })
+
+//get controls id
+router.get("/:id", authControls, authAdmin, async(req, res)=>{
+    try {
+        const id = req.params.id
+        const findUserControl = await prisma.controls.findFirst({
+            where:{
+                id:Number(id)
+            },
+            include:{
+                role:true
+            }
+        })
+        if (findUserControl) {
+            return res.status(200).json(findUserControl)
+        }
+        return res.status(404).json({message: "user control is not found"})
+    } catch (error) {
+        console.log(error)
+        res.status(404).json({message:"server error"})
+    }
+})
+
 //---------------------------------------------------------//
 //---------------------------------------------------------//
 //---------------------------------------------------------//

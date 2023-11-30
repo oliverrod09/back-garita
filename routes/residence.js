@@ -7,7 +7,7 @@ const authAdmin = require("../middlewares/authAdmin")
 
 
 //all residences
-router.get("/", authControls, authAdmin, async(req, res)=>{
+router.get("/", authControls, async(req, res)=>{
     try {
         const allResidences = await prisma.residences.findMany({
             include:{
